@@ -55,6 +55,12 @@
   <input id="sgroup" value="" placeholder="例如 123456789">
   <label for="sofficial">官方加群链接（可选）<span class="tip">QQ 群 → 群管理 → 加群设置 → 加群链接，复制 qm.qq.com/q/xxx 或 qun.qq.com/universal-share/... 链接；不填也能用</span></label>
   <input id="sofficial" value="" placeholder="不填也能用（手机跳群卡片 / 电脑复制群号）">
+  <label for="theme">选择网站风格（模板）</label>
+  <select id="theme" style="width:100%; padding:11px 13px; border:1.5px solid #cdd8c9; border-radius:10px; font-size:1rem; background:#fff;">
+    <option value="light" selected>☀️ 明亮简洁风（默认）</option>
+    <option value="pixel">⛏️ 暗色像素风（Minecraft 风）</option>
+    <option value="modern">🌌 现代深色渐变风</option>
+  </select>
 
   <div style="margin-top:20px;">
     <button class="btn" id="go">🚀 生成完整宣传站（下载 index.html）</button>
@@ -151,6 +157,44 @@ var SITE = {
   js: "/* ============================================================\n   【服务器名】宣传站（服主通用模板）\n   ------------------------------------------------------------\n   ★★ 最关键的配置就在下方两个对象，改完网站主体就好了 ★★\n   ============================================================ */\n\nvar SERVER = {\n  address: 'play.example.com:25565', // ★改成你的服务器地址（含端口）\n  version: 'Java 版 1.20 – 1.21.8',  // ★改成你的服务器支持的版本范围\n  group: ''                          // ★填你的 QQ 群号（数字）\n};\n\nvar GROUP = {\n  uin: SERVER.group,\n  // 手机端一键加群跳转（无需 key，打开群卡片后点「申请加入」）\n  mobileUrl: 'mqqapi://card/show_pslcard?src_type=internal&version=1&uin=' + SERVER.group,\n  // ★官方加群链接（可选）：QQ 群管理 → 加群设置 → 加群链接 生成，\n  // 形如 https://qm.qq.com/q/xxxx 或 qun.qq.com/universal-share/... \n  // 填了之后手机/电脑都直接跳官方加群页；不填则自动用「手机跳群卡片/电脑复制群号」\n  officialUrl: ''\n};\n\n(function () {\n  'use strict';\n\n  /* ---------- 1. 用 SERVER 配置同步页面文字 ---------- */\n  var FILL = { address: SERVER.address, version: SERVER.version, group: SERVER.group };\n\n  document.querySelectorAll('[data-fill]').forEach(function (el) {\n    var key = el.getAttribute('data-fill');\n    if (FILL[key]) el.textContent = FILL[key];\n  });\n\n  // 复制按钮的复制值也来自 SERVER（页面只需写 data-copy-key）\n  document.querySelectorAll('[data-copy-key]').forEach(function (el) {\n    var key = el.getAttribute('data-copy-key');\n    if (FILL[key]) el.setAttribute('data-copy', FILL[key]);\n  });\n\n  /* ---------- 2. 复制到剪贴板（带反馈） ---------- */\n  function fallbackCopy(text) {\n    var ta = document.createElement('textarea');\n    ta.value = text;\n    ta.style.position = 'fixed';\n    ta.style.opacity = '0';\n    document.body.appendChild(ta);\n    ta.select();\n    try { document.execCommand('copy'); } catch (e) { /* ignore */ }\n    document.body.removeChild(ta);\n  }\n\n  function flash(btn, copied) {\n    var label = btn.getAttribute('data-label') || btn.textContent;\n    btn.classList.add('is-copied');\n    btn.textContent = copied;\n    setTimeout(function () {\n      btn.classList.remove('is-copied');\n      btn.textContent = label;\n    }, 1600);\n  }\n\n  document.addEventListener('click', function (e) {\n    var btn = e.target.closest('[data-copy]');\n    if (!btn) return;\n    var text = btn.getAttribute('data-copy');\n    if (!text) return;\n\n    if (navigator.clipboard && window.isSecureContext) {\n      navigator.clipboard.writeText(text).catch(function () { fallbackCopy(text); });\n    } else {\n      fallbackCopy(text);\n    }\n    flash(btn, btn.getAttribute('data-copied') || '已复制 ✓');\n  });\n\n  /* ---------- 2.5 一键加群 ---------- */\n  document.querySelectorAll('[data-join-group-key]').forEach(function (el) {\n    el.setAttribute('data-join-group', SERVER.group);\n  });\n\n  document.addEventListener('click', function (e) {\n    var btn = e.target.closest('[data-join-group]');\n    if (!btn) return;\n\n    var ua = navigator.userAgent || '';\n    var isMobile = /Android|iPhone|iPad|iPod|Windows Phone|MQQBrowser|MicroMessenger/i.test(ua);\n\n    if (GROUP.officialUrl) {\n      // 官方加群链接：手机端当前页跳转（更稳），电脑端新标签打开\n      if (isMobile) { window.location.href = GROUP.officialUrl; }\n      else { window.open(GROUP.officialUrl, '_blank', 'noopener'); }\n      return;\n    }\n\n    if (isMobile) {\n      // 手机端：跳转 QQ 群卡片（打开后点「申请加入」）\n      window.location.href = GROUP.mobileUrl;\n      return;\n    }\n\n    // 电脑端：复制群号，提示到 QQ 搜索加群\n    if (navigator.clipboard && window.isSecureContext) {\n      navigator.clipboard.writeText(GROUP.uin).catch(function () { fallbackCopy(GROUP.uin); });\n    } else {\n      fallbackCopy(GROUP.uin);\n    }\n    flash(btn, '群号已复制 ✓');\n  });\n\n  /* ---------- 3. 服务器在线状态（双接口比赛制 + 60s 缓存，秒级出结果） ---------- */\n  function renderStatus(state, extra) {\n    var badge = document.getElementById('statusBadge');\n    var statusText = document.getElementById('statusText');\n    var statusText2 = document.getElementById('statusText2');\n    var maxEl = document.getElementById('maxText2');\n    if (!badge) return;\n\n    if (state === 'online') {\n      var online = (extra && extra.players && extra.players.online) || 0;\n      var max = (extra && extra.players && extra.players.max) || '-';\n      badge.setAttribute('data-state', 'online');\n      statusText.textContent = '在线 · ' + online + ' 人游玩';\n      if (statusText2) statusText2.textContent = '🟢 在线';\n      if (maxEl) maxEl.textContent = String(max);\n    } else if (state === 'offline') {\n      badge.setAttribute('data-state', 'offline');\n      statusText.textContent = '暂未开服';\n      if (statusText2) statusText2.textContent = '🔴 离线';\n      if (maxEl) maxEl.textContent = '-';\n    } else {\n      badge.setAttribute('data-state', 'unknown');\n      statusText.textContent = '状态未知';\n      if (statusText2) statusText2.textContent = '⚪ 无法检测';\n      if (maxEl) maxEl.textContent = '-';\n    }\n  }\n\n  function fetchJson(url, timeoutMs) {\n    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;\n    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, timeoutMs || 5000);\n    return fetch(url, ctrl ? { signal: ctrl.signal } : {})\n      .then(function (res) {\n        clearTimeout(timer);\n        if (!res.ok) throw new Error('HTTP ' + res.status);\n        return res.json();\n      })\n      .catch(function (err) {\n        clearTimeout(timer);\n        throw err;\n      });\n  }\n\n  /* 结果写本地缓存（60 秒），方便重复访问时瞬间显示 */\n  var statusCacheKey = 'mc_status_' + SERVER.address;\n  function renderAndCache(state, extra) {\n    try {\n      localStorage.setItem(statusCacheKey, JSON.stringify({\n        t: Date.now(),\n        state: state,\n        players: extra && extra.players ? { online: extra.players.online, max: extra.players.max } : null\n      }));\n    } catch (e) { /* 隐私模式等场景忽略 */ }\n    renderStatus(state, extra && extra.players\n      ? { players: { online: extra.players.online, max: extra.players.max } }\n      : null);\n  }\n\n  function fetchStatus() {\n    // 比赛制双接口：mcstatus.io（响应快）排前，mcsrvstat.us 交叉验证兜底。\n    // 任一接口确认在线就立刻显示，不等待慢的那个；两个都离线才显示离线。\n    var urls = [\n      'https://api.mcstatus.io/v2/status/java/' + encodeURIComponent(SERVER.address),\n      'https://api.mcsrvstat.us/3/' + encodeURIComponent(SERVER.address)\n    ];\n    var finished = false;\n    var settled = 0;\n    var responded = 0;\n\n    function settle() {\n      settled++;\n      if (settled === urls.length && !finished) {\n        // 两个请求都有结论：收到过正常响应且都离线 → 离线；全部网络失败 → 未知\n        renderAndCache(responded > 0 ? 'offline' : 'unknown', null);\n        finished = true;\n      }\n    }\n\n    urls.forEach(function (u) {\n      fetchJson(u, 5000).then(function (data) {\n        if (finished) return;\n        if (data && data.online) {\n          finished = true;\n          renderAndCache('online', data);\n          return;\n        }\n        responded++;\n        settle();\n      }).catch(function () {\n        settle();\n      });\n    });\n  }\n\n  // 先读缓存（60 秒内）立即显示，再后台静默刷新最新状态\n  try {\n    var cachedStatus = JSON.parse(localStorage.getItem(statusCacheKey) || 'null');\n    if (cachedStatus && cachedStatus.t && Date.now() - cachedStatus.t < 60000) {\n      renderStatus(cachedStatus.state, cachedStatus.players ? { players: cachedStatus.players } : null);\n    }\n  } catch (e) { /* 忽略 */ }\n\n  fetchStatus();\n\n  /* ---------- 4. 顶部导航：滚动阴影 + 移动端菜单 ---------- */\n  var header = document.getElementById('siteHeader');\n  var navToggle = document.getElementById('navToggle');\n  var mainNav = document.getElementById('mainNav');\n\n  function onScroll() {\n    if (window.scrollY > 10) header.classList.add('scrolled');\n    else header.classList.remove('scrolled');\n  }\n  window.addEventListener('scroll', onScroll, { passive: true });\n  onScroll();\n\n  if (navToggle && mainNav) {\n    navToggle.addEventListener('click', function () {\n      var open = mainNav.classList.toggle('open');\n      navToggle.setAttribute('aria-expanded', String(open));\n      navToggle.textContent = open ? '✕' : '☰';\n    });\n    mainNav.addEventListener('click', function (e) {\n      if (e.target.tagName === 'A') {\n        mainNav.classList.remove('open');\n        navToggle.setAttribute('aria-expanded', 'false');\n        navToggle.textContent = '☰';\n      }\n    });\n  }\n\n  /* ---------- 5. 滚动显现动画 ---------- */\n  var revealEls = document.querySelectorAll('.reveal');\n  if ('IntersectionObserver' in window) {\n    var io = new IntersectionObserver(function (entries) {\n      entries.forEach(function (entry) {\n        if (entry.isIntersecting) {\n          entry.target.classList.add('in');\n          io.unobserve(entry.target);\n        }\n      });\n    }, { threshold: 0.12 });\n    revealEls.forEach(function (el) { io.observe(el); });\n  } else {\n    revealEls.forEach(function (el) { el.classList.add('in'); });\n  }\n\n  /* ---------- 6. 页脚年份 ---------- */\n  var yearEl = document.getElementById('year');\n  if (yearEl) yearEl.textContent = String(new Date().getFullYear());\n})();\n"
 };
 
+/* 内置风格：明亮（默认，不加覆盖）/ 暗色像素 / 现代深色 */
+var THEMES = {
+  light: { label: '明亮简洁', css: '' },
+  pixel: {
+    label: '暗色像素风',
+    css: `
+:root{
+  --bg:#171c13; --surface:#212920; --border:#3b4530; --text:#eef1e2; --muted:#a7b18f;
+  --primary:#8bc34a; --primary-strong:#689f38; --primary-soft:#2b3622;
+  --shadow:0 8px 26px rgba(0,0,0,.5); --shadow-sm:0 3px 10px rgba(0,0,0,.4);
+}
+.site-header{background:rgba(23,28,19,.93);}
+.btn-primary,.step-num{background:linear-gradient(135deg,#9ccc65,var(--primary-strong));}
+.cta-inner{background:linear-gradient(135deg,var(--primary),var(--primary-strong));}
+.hero-art svg{filter:drop-shadow(0 18px 30px rgba(0,0,0,.5));}
+.btn,.btn-primary,.btn-copy,.btn-ghost,.nav-cta,.pill{border-radius:6px;}
+.copy-mini{border-radius:6px;}
+.hero-art svg{filter:none;}
+`
+  },
+  modern: {
+    label: '现代深色渐变',
+    css: `
+:root{
+  --bg:#0d1322; --surface:#151e33; --border:#26304a; --text:#e8edfb; --muted:#93a0bf;
+  --primary:#5e8bff; --primary-strong:#3f6be0; --primary-soft:#1c2744;
+  --radius:18px; --shadow:0 10px 34px rgba(0,0,0,.45); --shadow-sm:0 4px 14px rgba(0,0,0,.35);
+}
+.site-header{background:rgba(13,19,34,.92);}
+.hero .lead{color:#b6c0d9;}
+.btn-primary,.step-num{background:linear-gradient(135deg,#5b8cff,var(--primary-strong));}
+.cta-inner{background:linear-gradient(135deg,var(--primary),var(--primary-strong));}
+.feature-icon{background:var(--primary-soft);}
+.code,.ip-text{color:#8ab4ff;}
+`
+  }
+};
+
 function esc(v) {
   return String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
@@ -179,8 +223,10 @@ function build() {
     .split('Java 版 1.20 – 1.21.8').join('Java 版 ' + e(cfg.ver))
     .replace("group: ''", "group: '" + e(cfg.group) + "'")
     .replace("officialUrl: ''", "officialUrl: '" + e(cfg.official) + "'");
+  var themeEl = document.getElementById('theme');
+  var themeCss = themeEl && THEMES[themeEl.value] ? THEMES[themeEl.value].css : '';
   var html = fill(SITE.html, cfg)
-    .replace('<link rel="stylesheet" href="css/style.css">', '<style>\n' + SITE.css + '\n</style>')
+    .replace('<link rel="stylesheet" href="css/style.css">', '<style>\n' + SITE.css + '\n' + themeCss + '\n</style>')
     .replace('<script src="js/main.js"></' + 'script>', '<script>\n' + js + '\n</' + 'script>');
 
   var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
