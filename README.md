@@ -5,6 +5,11 @@
 
 本方案由一套真实在用的 MC 服务器宣传方案整理而来，已去除原服务器信息，任何 Java 版服务器服主都能直接用，**不会写代码也没关系**。
 
+> 🛠️ **技术支持 QQ 群：1107711066**
+> 使用本方案遇到问题（搭建 / 部署 / 掉线提醒配置 / 定制），加群咨询即可：
+> [点此一键加群](https://qun.qq.com/universal-share/share?ac=1&authKey=yl%2BgEDRbTe%2FP06c%2FSRcxj%2BootHd3ba2ce%2BgNr7cZTyzfCy%2FfOma1l2J8c2TLLiPh&busi_data=eyJncm91cENvZGUiOiIxMTA3NzExMDY2IiwidG9rZW4iOiI3STd3aEZpdjRlSUpxVkswUzhNUkVUdnNxcklucno3SVN2dEpkSENpdmxUM0pKZmV6V3NWZjlHSHBZWmwvOTIzIiwidWluIjoiMTk1NDQ5NTM5MiJ9&data=A3tvyKbE9Tn2HPwtYas1UdySpJ_4fcueKZMwAnxHsi9JNzzqNQu4xy9VF4_PyJkWHcsDvcYhNmnL6wbZNuim6Q&svctype=4&tempid=h5_group_info)
+> （或在 QQ 中直接搜索群号 **1107711066** 加入）
+
 ---
 
 ## 🚀 用法一（最省事，推荐）：用「配置向导」

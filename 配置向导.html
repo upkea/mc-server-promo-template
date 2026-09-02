@@ -22,10 +22,6 @@
          font-size: 1.05rem; font-weight: 700; padding: 14px 30px; background: linear-gradient(135deg,#5cb543,#3f8527);
          color: #fff; box-shadow: 0 6px 16px rgba(63,133,39,.35); }
   .btn:hover { filter: brightness(1.05); }
-  .btn-join { display:inline-block; border:none; cursor:pointer; border-radius:999px;
-    font-size:.95rem; font-weight:700; padding:10px 22px; color:#fff;
-    background:linear-gradient(135deg,#5cb543,#3f8527); box-shadow:0 4px 12px rgba(63,133,39,.3); }
-  .btn-join:hover { filter:brightness(1.05); }
   .result { display: none; margin-top: 16px; padding: 12px 16px; background: #e9f5e2; border-radius: 10px;
             color: #2c5c1a; font-size: .95rem; }
   ol.steps { padding-left: 20px; }
@@ -65,11 +61,6 @@
   </div>
   <div class="result" id="res"></div>
   <p class="note ok">📦 点按钮下载的 <b>index.html</b> 就是你的完整宣传站（CSS/JS 已全部内联进这一个文件，含 FAQ 等全部板块）。双击它能本地预览，也可以直接部署。</p>
-  <p class="note" style="background:#eef7fb; border-color:#bfdded; color:#27586e;">
-    💬 <b>技术支持 QQ 群：1107711066</b>　使用本向导 / 这套方案遇到问题，点下面按钮一键加群咨询：
-    <br><br>
-    <button class="btn-join" type="button" id="joinSupport">➕ 一键加入技术支持群</button>
-  </p>
 </div>
 
 <div class="card">
@@ -113,10 +104,6 @@
   <details>
     <summary>以后想换自己的域名？</summary>
     <p>买个便宜域名（首年几块到十几块）绑到 Cloudflare Pages / GitHub Pages 即可，与本方案不冲突，详见各平台文档。</p>
-  </details>
-  <details>
-    <summary>用这套方案遇到问题 / 想反馈 / 想定制？</summary>
-    <p>点上方「💬 一键加入技术支持群」按钮（或 QQ 搜索 <b>1107711066</b> 加群），搭建、部署、掉线提醒配置有问题都可以在群里问。</p>
   </details>
 </div>
 
@@ -188,34 +175,6 @@ function build() {
   res.style.display = 'block';
   res.innerHTML = '✅ 已生成并开始下载 <b>index.html</b>（完整宣传站）！<br>没弹出下载？用 Chrome / Edge 打开本页重试。然后按上方「三步免费上线」部署即可。';
 }
-
-/* 技术支持群：与宣传站一致的一键加群（官方链接 → 手机跳QQ） */
-var SUPPORT = {
-  uin: '1107711066',
-  officialUrl: 'https://qun.qq.com/universal-share/share?ac=1&authKey=yl%2BgEDRbTe%2FP06c%2FSRcxj%2BootHd3ba2ce%2BgNr7cZTyzfCy%2FfOma1l2J8c2TLLiPh&busi_data=eyJncm91cENvZGUiOiIxMTA3NzExMDY2IiwidG9rZW4iOiI3STd3aEZpdjRlSUpxVkswUzhNUkVUdnNxcklucno3SVN2dEpkSENpdmxUM0pKZmV6V3NWZjlHSHBZWmwvOTIzIiwidWluIjoiMTk1NDQ5NTM5MiJ9&data=A3tvyKbE9Tn2HPwtYas1UdySpJ_4fcueKZMwAnxHsi9JNzzqNQu4xy9VF4_PyJkWHcsDvcYhNmnL6wbZNuim6Q&svctype=4&tempid=h5_group_info'
-};
-
-document.getElementById('joinSupport').addEventListener('click', function () {
-  var ua = navigator.userAgent || '';
-  var isMobile = /Android|iPhone|iPad|iPod|Windows Phone|MQQBrowser|MicroMessenger/i.test(ua);
-  if (SUPPORT.officialUrl) {
-    if (isMobile) { window.location.href = SUPPORT.officialUrl; }
-    else { window.open(SUPPORT.officialUrl, '_blank'); }
-    return;
-  }
-  if (isMobile) {
-    window.location.href = 'mqqapi://card/show_pslcard?src_type=internal&version=1&uin=' + SUPPORT.uin;
-    return;
-  }
-  // 电脑端兜底：复制群号
-  var ta = document.createElement('textarea');
-  ta.value = SUPPORT.uin;
-  document.body.appendChild(ta);
-  ta.select();
-  try { document.execCommand('copy'); } catch (err) {}
-  document.body.removeChild(ta);
-  alert('已复制群号 ' + SUPPORT.uin + '，请到 QQ 搜索加入');
-});
 
 document.getElementById('go').addEventListener('click', build);
 </script>
