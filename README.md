@@ -21,7 +21,7 @@
 3. 把 `index.html` 部署到免费托管（三选一）：
    - **Cloudflare Pages**：dash.cloudflare.com → Workers & Pages → Upload assets → 拖入文件
    - **Netlify**：app.netlify.com/drop → 拖入文件
-   - **GitHub Pages**：GitHub 新建仓库上传 → Settings → Pages → main 分支
+   - **GitHub Pages**：新建仓库（Public）→ 上传 `index.html` → 仓库 Settings → Pages → Source 选 Deploy from a branch → 分支 main → Save；等 1~3 分钟构建完成后，回到 Settings → Pages，顶部绿色横幅就是你的网址：`https://你的用户名.github.io/仓库名/`（点它打开即网站，Actions 标签里也能看到）
 4. 拿到网址发到 QQ 群，完成 🎉
 
 向导页里还内置了 **FAQ** 和「掉线自动微信提醒」的启用说明，一条龙讲完。
