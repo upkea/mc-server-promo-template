@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# MC 服务器「掉线哨兵」（服主模板附赠）
+# 运行在 GitHub Actions（云端），检测下方 SERVER 是否在线，
+# 状态从在线变为掉线时通过 Server酱推送微信提醒。
+# 首次运行只记录状态、不发提醒，避免误报。
+# ★★ 使用前必改：SERVER 改成你的服务器地址；推送文案里的「服务器名」随手改成你的
+set -euo pipefail
+
+SERVER="play.example.com:25565"   # ★改成你的服务器地址（含端口）
+STATE_FILE=".watchdog/state.json"
+KEY="${SERVERCHAN_KEY:-}"
+
+echo "== $(date '+%Y-%m-%d %H:%M:%S') 检查 ${SERVER} =="
+
+# 双接口交叉检测：任一确认在线即视为在线
+s1=$(curl -sS --max-time 12 "https://api.mcstatus.io/v2/status/java/${SERVER}" 2>/dev/null || true)
+s2=$(curl -sS --max-time 12 "https://api.mcsrvstat.us/3/${SERVER}" 2>/dev/null || true)
+
+online="false"
+responded="false"
+
+if [ -n "$s1" ] && echo "$s1" | jq -e 'type == "object"' >/dev/null 2>&1; then
+  responded="true"
+  if echo "$s1" | jq -e '.online == true' >/dev/null 2>&1; then online="true"; fi
+fi
+if [ "$online" = "false" ] && [ -n "$s2" ] && echo "$s2" | jq -e 'type == "object"' >/dev/null 2>&1; then
+  responded="true"
+  if echo "$s2" | jq -e '.online == true' >/dev/null 2>&1; then online="true"; fi
+fi
+
+if [ "$responded" = "false" ]; then
+  echo "两个检测接口都不可用，跳过本次（避免误报）"
+  exit 0
+fi
+
+if [ "$online" = "true" ]; then NEW="online"; else NEW="offline"; fi
+
+PREV=""
+if [ -f "$STATE_FILE" ]; then
+  PREV=$(jq -r '.state // empty' "$STATE_FILE" 2>/dev/null || true)
+fi
+
+echo "状态: ${PREV:-<首次>} -> ${NEW}"
+
+if [ "$NEW" = "$PREV" ]; then
+  echo "状态未变化，结束"
+  exit 0
+fi
+
+printf '{"state":"%s","time":"%s"}\n' "$NEW" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$STATE_FILE"
+
+if [ -n "$KEY" ]; then
+  now=$(TZ=Asia/Shanghai date '+%m-%d %H:%M')
+  if [ "$NEW" = "offline" ] && [ "$PREV" = "online" ]; then
+    echo ">>> 发送掉线提醒"
+    resp=$(curl -sS --max-time 15 -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+      --data-urlencode "title=🔴 【服务器名】掉线提醒" \
+      --data-urlencode "desp=**服务器 ${SERVER} 检测到未开服**（${now}）
+
+- 当前状态：未开服 / 无法连接
+
+请前往你的**服务器控制面板**：
+如已完成今日签到，直接点击「启动」；若平台要求先签到，请先完成每日签到再启动。
+
+状态详情：https://你的宣传站地址/") || resp="推送请求失败"
+    echo "Server酱响应: ${resp:0:200}"
+  elif [ "$NEW" = "online" ] && [ "$PREV" = "offline" ]; then
+    echo ">>> 发送恢复提醒"
+    resp=$(curl -sS --max-time 15 -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+      --data-urlencode "title=🟢 【服务器名】已恢复" \
+      --data-urlencode "desp=**服务器 ${SERVER} 已恢复在线**（${now}）
+
+玩家现在可以正常进服啦！
+
+状态详情：https://你的宣传站地址/") || resp="推送请求失败"
+    echo "Server酱响应: ${resp:0:200}"
+  fi
+fi
+
+# 记录最新状态（仅状态变化时产生一次提交），供下次对比
+git -c user.name="server-watchdog" -c user.email="actions@users.noreply.github.com" add "$STATE_FILE"
+git -c user.name="server-watchdog" -c user.email="actions@users.noreply.github.com" commit -m "watchdog: state -> ${NEW}" >/dev/null 2>&1 || true
+git push >/dev/null 2>&1 || true
+echo "完成"
