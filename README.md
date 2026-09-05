@@ -13,10 +13,10 @@
 ---
 
 <p align="center">
-  <a href="图文演示教程.html">
+  <a href="https://upkea.github.io/mc-server-promo-template/图文演示教程.html">
     <img src="图文教程按钮.png" alt="打开图文演示教程" width="460">
   </a>
-  <br><small>🖼️ 配截图、一步一步做的演示教程，点上方按钮打开</small>
+  <br><small>🖼️ 配截图、一步一步做的演示教程，点上方按钮在线打开（无需下载）</small>
 </p>
 
 ## 🚀 用法一（最省事，推荐）：用「配置向导」
