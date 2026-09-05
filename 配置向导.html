@@ -33,6 +33,11 @@
   details p { padding: 0 16px 12px; color: #444f41; font-size: .93rem; }
   .note { background: #fff7e6; border: 1px solid #f0d9a8; border-radius: 12px; padding: 13px 16px;
           font-size: .88rem; color: #7a5b1e; margin-top: 12px; }
+  .ai-btn { display:inline-block; border:none; cursor:pointer; border-radius:999px;
+    font-size:.9rem; font-weight:700; padding:9px 20px; color:#fff;
+    background:linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 4px 12px rgba(109,40,217,.3); }
+  .ai-btn:hover { filter:brightness(1.06); }
+  .ai-state { margin-top:10px; font-size:.88rem; color:#4b5563; white-space:pre-wrap; }
   .ok { background: #e9f5e2; border-color: #bfe0ae; color: #2c5c1a; }
   .tag { display:inline-block; padding:1px 9px; border-radius:999px; font-size:.75rem; font-weight:700;
          background:#e9f5e2; color:#2f7d1d; margin-left:6px; vertical-align:middle; }
@@ -61,6 +66,19 @@
     <option value="pixel">⛏️ 暗色像素风（Minecraft 风）</option>
     <option value="modern">🌌 现代深色渐变风</option>
   </select>
+
+  <details style="margin-top:14px;">
+    <summary>✨ 高级可选：让 AI 生成专属风格</summary>
+    <label for="aiDesc">描述你想要的效果（一句话）</label>
+    <input id="aiDesc" value="" placeholder="例如：森林绿 + 像素风 + 护眼">
+    <label for="aiUrl">AI 服务地址（一般已内置，无需改动）</label>
+    <input id="aiUrl" value="https://1480104501-4ymc7patbr.ap-guangzhou.tencentscf.com">
+    <div style="margin-top:12px;">
+      <button class="ai-btn" type="button" id="aiGo">✨ 让 AI 生成风格</button>
+    </div>
+    <div class="ai-state" id="aiState"></div>
+    <p class="tip">生成成功后，直接点上方「🚀 生成完整宣传站」，会自动套用 AI 生成的新风格。</p>
+  </details>
 
   <div style="margin-top:20px;">
     <button class="btn" id="go">🚀 生成完整宣传站（下载 index.html）</button>
@@ -224,7 +242,7 @@ function build() {
     .replace("group: ''", "group: '" + e(cfg.group) + "'")
     .replace("officialUrl: ''", "officialUrl: '" + e(cfg.official) + "'");
   var themeEl = document.getElementById('theme');
-  var themeCss = themeEl && THEMES[themeEl.value] ? THEMES[themeEl.value].css : '';
+  var themeCss = window.__aiCss || (themeEl && THEMES[themeEl.value] ? THEMES[themeEl.value].css : '');
   var html = fill(SITE.html, cfg)
     .replace('<link rel="stylesheet" href="css/style.css">', '<style>\n' + SITE.css + '\n' + themeCss + '\n</style>')
     .replace('<script src="js/main.js"></' + 'script>', '<script>\n' + js + '\n</' + 'script>');
@@ -241,6 +259,32 @@ function build() {
   res.style.display = 'block';
   res.innerHTML = '✅ 已生成并开始下载 <b>index.html</b>（完整宣传站）！<br>没弹出下载？用 Chrome / Edge 打开本页重试。然后按上方「三步免费上线」部署即可。';
 }
+
+/* AI 换风格：调用 AI 主题服务，返回一段 CSS 覆盖主题 */
+window.__aiCss = '';
+document.getElementById('aiGo').addEventListener('click', function () {
+  var desc = document.getElementById('aiDesc').value.trim();
+  var url = document.getElementById('aiUrl').value.trim();
+  var state = document.getElementById('aiState');
+  if (!desc) { state.textContent = '请先描述你想要的效果（如：森林绿像素风）。'; return; }
+  if (!url) { state.textContent = '还没有 AI 服务地址（正常情况下已内置）。请检查或找技术支持。'; return; }
+  state.textContent = '⏳ AI 生成中，约需几秒…';
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ desc: desc })
+  })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (d) {
+      if (d && d.css) {
+        window.__aiCss = d.css;
+        state.textContent = '✅ AI 风格已生成！现在点上方「🚀 生成完整宣传站」，下载的网站会自动套用这个新风格。';
+      } else {
+        state.textContent = 'AI 返回异常：' + JSON.stringify(d);
+      }
+    })
+    .catch(function (e) { state.textContent = '调用失败：' + e.message; });
+});
 
 document.getElementById('go').addEventListener('click', build);
 </script>
