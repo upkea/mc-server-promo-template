@@ -86,6 +86,17 @@
     <p class="tip">生成成功后，直接点上方「🚀 生成完整宣传站」，会自动套用 AI 生成的新风格。</p>
   </details>
 
+  <div style="margin-top:16px; border-top:1px dashed #e2e9df; padding-top:16px;">
+    <div class="ai-btn" style="cursor:default; background:linear-gradient(135deg,#2da44e,#1f7a3a); color:#fff; display:inline-block; padding:9px 20px; border-radius:999px; font-weight:700;">🚀 一键上线（自动创建网站）</div>
+    <p class="sub" style="margin-top:8px;">填好上方信息，输入<b>卡密</b>，点一下即<b>自动生成 + 发布到 COS</b>，直接得到网址。自用可留空（免费通道）。</p>
+    <label for="pCode">卡密（向服主购买获得；自用留空走免费通道）</label>
+    <input id="pCode" value="" placeholder="例如 MCP-XXXX-XXXX">
+    <div style="margin-top:12px;">
+      <button class="btn" id="pGo" style="background:linear-gradient(135deg,#2da44e,#1f7a3a);">🚀 一键上线</button>
+    </div>
+    <div class="ai-state" id="pState"></div>
+  </div>
+
   <div style="margin-top:20px;">
     <button class="btn" id="go">🚀 生成完整宣传站（下载 index.html）</button>
   </div>
@@ -321,6 +332,36 @@ document.getElementById('aiGo').addEventListener('click', function () {
         state.textContent = '✅ AI 风格已生成！现在点上方「🚀 生成完整宣传站」，下载的网站会自动套用这个新风格。';
       } else {
         state.textContent = 'AI 返回异常：' + JSON.stringify(d);
+      }
+    })
+    .catch(function (e) { state.textContent = '调用失败：' + e.message; });
+});
+
+// 一键上线：调发布云函数（卡密通道 / 免费自用通道）
+var PUBLISH_URL = 'https://1480104501-3mizwpkckz.ap-guangzhou.tencentscf.com';
+document.getElementById('pGo').addEventListener('click', function () {
+  var code = document.getElementById('pCode').value.trim();
+  var state = document.getElementById('pState');
+  var server = {
+    name: document.getElementById('sname').value.trim(),
+    address: document.getElementById('saddr').value.trim(),
+    version: document.getElementById('sver').value.trim(),
+    group: document.getElementById('sgroup').value.trim()
+  };
+  if (!server.name || !server.address) { state.textContent = '请先填好上方「服务器名称」和「服务器地址」。'; return; }
+  var payload = code ? { action: 'redeem', code: code, server: server } : { action: 'self', server: server };
+  state.textContent = '⏳ 一键上线中（自动生成 + 发布），约 5~10 秒…';
+  fetch(PUBLISH_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d && d.ok && d.url) {
+        state.innerHTML = '✅ <b>上线成功！</b>这是你的网站网址（发给玩家即可）：<br><a href="' + d.url + '" target="_blank" style="color:#2da44e;font-weight:700;">' + d.url + '</a>';
+      } else {
+        state.textContent = '上线失败：' + (d && d.error ? d.error : JSON.stringify(d));
       }
     })
     .catch(function (e) { state.textContent = '调用失败：' + e.message; });
