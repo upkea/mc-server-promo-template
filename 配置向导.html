@@ -71,8 +71,11 @@
     <summary>✨ 高级可选：让 AI 生成专属风格</summary>
     <label for="aiDesc">用一句话描述想要的效果（可偷懒，有图更能懂）</label>
     <input id="aiDesc" value="" placeholder="例如：森林绿 + 像素风 + 护眼；或留空，靠参考图"/>
-    <label for="aiImg">上传参考图（可选）：把你喜欢的风格图传上来，AI 看图配色</label>
-    <input type="file" id="aiImg" accept="image/*" style="width:100%; padding:8px; border:1.5px dashed #cdd8c9; border-radius:10px; background:#fff;">
+    <label style="margin-top:12px;">上传参考图（可选）：把喜欢的风格图拖到下面，或点一下选择</label>
+    <div id="aiDrop" style="width:100%; padding:22px 12px; text-align:center; border:2px dashed #cdd8c9; border-radius:12px; background:#fbfcfa; color:#7a8468; cursor:pointer; font-size:.95rem; transition:all .15s ease;">
+      🖼 把图片拖到这里，或点击选择
+    </div>
+    <input type="file" id="aiImg" accept="image/*" style="display:none;">
     <img id="aiImgPrev" alt="预览" style="display:none; max-width:220px; margin-top:8px; border:1px solid #cdd8c9; border-radius:8px;">
     <label for="aiUrl">AI 服务地址（一般已内置，无需改动）</label>
     <input id="aiUrl" value="https://1480104501-4ymc7patbr.ap-guangzhou.tencentscf.com">
@@ -267,11 +270,10 @@ function build() {
 window.__aiCss = '';
 window.__aiImg = '';
 
-// 选图：本地压缩到最大 900px，转 dataURL，避免请求过大
-document.getElementById('aiImg').addEventListener('change', function (e) {
-  var file = e.target.files && e.target.files[0];
+// 选图/拖图：本地压缩到最大 900px，转 dataURL，避免请求过大
+function handleImgFile(file) {
   var prev = document.getElementById('aiImgPrev');
-  if (!file) { window.__aiImg = ''; prev.style.display = 'none'; return; }
+  if (!file || file.type.indexOf('image') !== 0) { window.__aiImg = ''; prev.style.display = 'none'; return; }
   var reader = new FileReader();
   reader.onload = function () {
     var img = new Image();
@@ -287,7 +289,18 @@ document.getElementById('aiImg').addEventListener('change', function (e) {
     img.src = reader.result;
   };
   reader.readAsDataURL(file);
+}
+var aiImg = document.getElementById('aiImg');
+var aiDrop = document.getElementById('aiDrop');
+aiDrop.addEventListener('click', function () { aiImg.click(); });
+aiImg.addEventListener('change', function (e) { handleImgFile(e.target.files && e.target.files[0]); });
+['dragover', 'dragenter'].forEach(function (ev) {
+  aiDrop.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); aiDrop.style.borderColor = '#5cb543'; aiDrop.style.background = '#e9f5e2'; });
 });
+['dragleave', 'drop'].forEach(function (ev) {
+  aiDrop.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); aiDrop.style.borderColor = '#cdd8c9'; aiDrop.style.background = '#fbfcfa'; });
+});
+aiDrop.addEventListener('drop', function (e) { handleImgFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
 
 document.getElementById('aiGo').addEventListener('click', function () {
   var desc = document.getElementById('aiDesc').value.trim();
